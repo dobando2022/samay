@@ -134,43 +134,106 @@
     });
   }
 
-  function selectDate(date){
-    selectedDate = date;
-    selectedSlot = null;
-    renderCalendar();
-    renderSlots();
+  /* ---------- day columns (panel de horarios) ---------- */
+  function isEnabledDay(date){
+    return !isPast(date) && !isWeekend(date);
   }
 
-  function renderSlots(){
-    var dateLabel = document.getElementById('bookingSelectedDate');
-    var list = document.getElementById('bookingSlotList');
-    var confirmBtn = document.getElementById('bookingConfirm');
-    if(!dateLabel || !list || !confirmBtn) return;
-
-    if(!selectedDate){
-      dateLabel.textContent = 'Elige un día disponible';
-      list.innerHTML = '';
-      confirmBtn.disabled = true;
-      return;
+  function firstEnabledDay(fromDate){
+    var d = new Date(fromDate);
+    d.setHours(0,0,0,0);
+    var guard = 0;
+    while(!isEnabledDay(d) && guard < 30){
+      d.setDate(d.getDate() + 1);
+      guard++;
     }
+    return d;
+  }
 
-    dateLabel.textContent = DAY_NAMES[selectedDate.getDay()] + ', ' + selectedDate.getDate() + ' de ' + MONTH_NAMES[selectedDate.getMonth()];
-    list.innerHTML = '';
+  function nextEnabledDay(fromDate, direction){
+    var d = new Date(fromDate);
+    var guard = 0;
+    do{
+      d.setDate(d.getDate() + direction);
+      guard++;
+    } while(!isEnabledDay(d) && guard < 30);
+    return d;
+  }
 
-    SLOTS.forEach(function(slot){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'booking-slot';
-      b.textContent = slot;
-      if(slot === selectedSlot) b.classList.add('is-selected');
-      b.addEventListener('click', function(){
-        selectedSlot = slot;
-        renderSlots();
+  function getEnabledDaysFrom(startDate, count){
+    var days = [];
+    var d = new Date(startDate);
+    var guard = 0;
+    while(days.length < count && guard < 60){
+      if(isEnabledDay(d)) days.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+      guard++;
+    }
+    return days;
+  }
+
+  function selectDate(date){
+    selectedDate = new Date(date);
+    selectedDate.setHours(0,0,0,0);
+    selectedSlot = null;
+    renderCalendar();
+    renderDayColumns();
+  }
+
+  function renderDayColumns(){
+    var wrap = document.getElementById('bookingDayCols');
+    var confirmBtn = document.getElementById('bookingConfirm');
+    if(!wrap || !confirmBtn) return;
+
+    var anchor = selectedDate ? new Date(selectedDate) : firstEnabledDay(new Date());
+    var days = getEnabledDaysFrom(anchor, 5);
+
+    wrap.innerHTML = '';
+    days.forEach(function(day, index){
+      var col = document.createElement('div');
+      col.className = 'daycol';
+      if(index === 0) col.classList.add('is-active');
+
+      var head = document.createElement('div');
+      head.className = 'daycol-head';
+      head.innerHTML =
+        '<span class="daycol-weekday">' + DAY_NAMES[day.getDay()].slice(0,3).toUpperCase() + '</span>' +
+        '<span class="daycol-num">' + day.getDate() + '</span>';
+      col.appendChild(head);
+
+      var slotsBox = document.createElement('div');
+      slotsBox.className = 'daycol-slots';
+      SLOTS.forEach(function(slot){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'booking-slot';
+        b.textContent = slot;
+        if(isSameDay(day, selectedDate) && slot === selectedSlot){
+          b.classList.add('is-selected');
+        }
+        b.addEventListener('click', (function(dayForSlot, slotValue){
+          return function(){
+            selectedDate = new Date(dayForSlot);
+            selectedSlot = slotValue;
+            renderCalendar();
+            renderDayColumns();
+          };
+        })(day, slot));
+        slotsBox.appendChild(b);
       });
-      list.appendChild(b);
+      col.appendChild(slotsBox);
+      wrap.appendChild(col);
     });
 
-    confirmBtn.disabled = !selectedSlot;
+    confirmBtn.disabled = !(selectedDate && selectedSlot);
+  }
+
+  function stepActiveDay(direction){
+    var anchor = selectedDate ? selectedDate : firstEnabledDay(new Date());
+    selectedDate = nextEnabledDay(anchor, direction);
+    selectedSlot = null;
+    renderCalendar();
+    renderDayColumns();
   }
 
   function openBookingModal(){
@@ -179,8 +242,10 @@
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    if(!selectedDate){ selectedDate = firstEnabledDay(new Date()); }
+    viewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     renderCalendar();
-    renderSlots();
+    renderDayColumns();
   }
 
   function closeBookingModal(){
@@ -203,6 +268,8 @@
   function initBooking(){
     var prevBtn = document.getElementById('bookingPrev');
     var nextBtn = document.getElementById('bookingNext');
+    var dayPrevBtn = document.getElementById('bookingDayPrev');
+    var dayNextBtn = document.getElementById('bookingDayNext');
     var confirmBtn = document.getElementById('bookingConfirm');
     var closeBtn = document.getElementById('bookingClose');
     var overlay = document.getElementById('bookingOverlay');
@@ -216,6 +283,8 @@
       viewDate.setMonth(viewDate.getMonth() + 1);
       renderCalendar();
     });
+    dayPrevBtn.addEventListener('click', function(){ stepActiveDay(-1); });
+    dayNextBtn.addEventListener('click', function(){ stepActiveDay(1); });
     confirmBtn.addEventListener('click', confirmBooking);
     closeBtn.addEventListener('click', closeBookingModal);
     overlay.addEventListener('click', function(e){
