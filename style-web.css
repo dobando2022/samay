@@ -83,3 +83,98 @@
   .metric-chip-speed{ left:0; }
   .metric-chip-conv{ right:0; }
 }
+
+/* ---------------- PORTAFOLIO / CASOS DE ÉXITO ---------------- */
+.portfolio{ padding:50px 0; }
+.portfolio-head{ max-width:600px; margin-bottom:30px; }
+.portfolio-head h2{ margin-top:14px; font-size:clamp(1.8rem, 2.6vw + 0.7rem, 2.4rem); font-weight:600; }
+.portfolio-disclaimer{
+  margin-top:12px;
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:var(--muted);
+  line-height:1.5;
+}
+.portfolio-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.portfolio-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  padding:24px 22px;
+}
+.portfolio-tag{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:#fff;
+  background:var(--grad);
+  padding:5px 12px;
+  border-radius:100px;
+  margin-bottom:16px;
+}
+.portfolio-focus{ font-size:14.5px; color:var(--muted); line-height:1.6; margin-bottom:20px; min-height:66px; }
+.portfolio-metric{ padding-top:16px; border-top:1px solid var(--line); }
+.portfolio-metric-value{
+  display:block;
+  font-family:var(--display);
+  font-weight:700;
+  font-size:28px;
+  background:var(--grad);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.portfolio-metric-label{ display:block; font-size:12.5px; color:var(--muted); margin-top:4px; }
+
+@media (max-width:980px){ .portfolio-grid{ grid-template-columns:1fr 1fr; } }
+@media (max-width:640px){
+  .portfolio-grid{ grid-template-columns:1fr; }
+  .portfolio-focus{ min-height:0; }
+}
+
+/* ---------------- FORMULARIO DE COTIZACIÓN ---------------- */
+.quote{ padding:50px 0; }
+.quote-card{ padding:38px 34px; }
+.quote-head h2{ margin-top:14px; font-size:clamp(1.7rem, 2.4vw + 0.7rem, 2.2rem); font-weight:600; line-height:1.25; }
+.quote-head p{ margin-top:12px; color:var(--muted); font-size:15.5px; max-width:440px; }
+.quote-form{ margin-top:28px; display:grid; grid-template-columns:1fr 1fr; gap:16px 18px; }
+.quote-field{ display:flex; flex-direction:column; gap:6px; }
+.quote-field:nth-child(3){ grid-column:1 / -1; }
+.quote-field label{
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:var(--muted);
+  letter-spacing:0.02em;
+}
+.quote-field input{
+  font-family:var(--body);
+  font-size:15px;
+  color:var(--ink);
+  padding:12px 14px;
+  border-radius:10px;
+  border:1.5px solid var(--line);
+  background:var(--bg-soft);
+  outline:none;
+  transition:border-color .15s ease, background .15s ease;
+}
+.quote-field input:focus{ border-color:var(--violet); background:var(--surface); }
+.quote-submit{ grid-column:1 / -1; justify-content:center; margin-top:6px; }
+.quote-note{
+  grid-column:1 / -1;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+  text-align:center;
+  margin-top:4px;
+  line-height:1.5;
+}
+
+@media (max-width:640px){
+  .quote-card{ padding:26px 22px; }
+  .quote-form{ grid-template-columns:1fr; }
+  .quote-field:nth-child(3){ grid-column:auto; }
+}
