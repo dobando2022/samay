@@ -352,6 +352,13 @@ nav.wrap{
 .svc-card p{ font-size:14.5px; color:var(--muted); line-height:1.6; }
 
 .svc-cards.svc-cards-2{ grid-template-columns:repeat(2, 1fr) !important; max-width:800px; }
+.svc-cards.svc-cards-4{ grid-template-columns:repeat(4, 1fr) !important; }
+@media (max-width:980px){
+  .svc-cards.svc-cards-4{ grid-template-columns:repeat(2, 1fr) !important; }
+}
+@media (max-width:640px){
+  .svc-cards.svc-cards-4{ grid-template-columns:1fr !important; }
+}
 @media (max-width:480px){
   .svc-cards.svc-cards-2{ grid-template-columns:repeat(2, 1fr) !important; gap:12px; }
   .svc-cards.svc-cards-2 .svc-icon{ width:28px; height:28px; margin-bottom:10px; }
@@ -1120,4 +1127,107 @@ details[open] > summary .acc-arrow{ transform:rotate(180deg); }
   .timeline-line{ display:none; }
   .timeline-step{ padding-right:0; padding-left:24px; border-left:2px solid var(--line); }
   .timeline-dot{ width:36px; height:36px; font-size:12.5px; margin-left:-18px; margin-bottom:14px; }
+}
+
+/* =====================================================
+   FORMULARIO DE COTIZACIÓN (compartido)
+   ===================================================== */
+.quote{ padding:50px 0; }
+.quote-card{ padding:38px 34px; }
+.quote-head h2{ margin-top:14px; font-size:clamp(1.7rem, 2.4vw + 0.7rem, 2.2rem); font-weight:600; line-height:1.25; }
+.quote-head p{ margin-top:12px; color:var(--muted); font-size:15.5px; max-width:460px; }
+.quote-form{ margin-top:28px; display:grid; grid-template-columns:1fr 1fr; gap:16px 18px; }
+.quote-field{ display:flex; flex-direction:column; gap:6px; }
+.quote-field.full{ grid-column:1 / -1; }
+.quote-field label{
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:var(--muted);
+  letter-spacing:0.02em;
+}
+.quote-field input,
+.quote-field select{
+  font-family:var(--body);
+  font-size:15px;
+  color:var(--ink);
+  padding:12px 14px;
+  border-radius:10px;
+  border:1.5px solid var(--line);
+  background:var(--bg-soft);
+  outline:none;
+  transition:border-color .15s ease, background .15s ease;
+  width:100%;
+}
+.quote-field input:focus,
+.quote-field select:focus{ border-color:var(--violet); background:var(--surface); }
+.tel-group{ display:flex; gap:8px; }
+.tel-group select{ flex:0 0 92px; padding-left:8px; padding-right:4px; }
+.tel-group input{ flex:1; }
+
+.quote-checkbox{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.5;
+}
+.quote-checkbox input{ margin-top:3px; width:16px; height:16px; accent-color:var(--violet); flex:none; }
+.quote-checkbox a{ color:var(--violet); text-decoration:underline; }
+
+.quote-submit{ grid-column:1 / -1; justify-content:center; margin-top:6px; }
+.quote-note{
+  grid-column:1 / -1;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+  text-align:center;
+  margin-top:4px;
+  line-height:1.5;
+}
+
+@media (max-width:640px){
+  .quote-card{ padding:26px 22px; }
+  .quote-form{ grid-template-columns:1fr; }
+}
+
+/* =====================================================
+   PRUEBA SOCIAL / AUTORIDAD (países + nota legal)
+   ===================================================== */
+.authority{ padding:50px 0; background:var(--bg-soft); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.authority-head{ max-width:680px; margin-bottom:14px; }
+.authority-head h2{ margin-top:14px; font-size:clamp(1.8rem, 2.6vw + 0.7rem, 2.4rem); font-weight:600; line-height:1.25; }
+.authority-head p{ margin-top:14px; color:var(--muted); font-size:16px; line-height:1.65; }
+.authority-head p + p{ margin-top:12px; }
+
+.country-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:26px;
+}
+.country-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:100px;
+  padding:8px 14px;
+  font-size:13.5px;
+  font-weight:500;
+  color:var(--ink);
+  box-shadow:var(--shadow-card);
+}
+
+.legal-note{
+  margin-top:26px;
+  padding-top:18px;
+  border-top:1px solid var(--line);
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.6;
+  max-width:720px;
 }
