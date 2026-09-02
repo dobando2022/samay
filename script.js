@@ -9,9 +9,9 @@
   // TODO: reemplaza estos dos valores después de desplegar el Apps Script
   // (ver samay_booking_apps_script.gs) — sin esto el botón no puede crear
   // la reunión real, solo mostrará el mensaje de respaldo por WhatsApp.
-  var APPS_SCRIPT_URL = 'REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT';
-  var APPS_SCRIPT_SECRET = 'REEMPLAZA_CON_TU_CLAVE_SECRETA';
-
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSBb64CeSVQbtzLrcam7eZe5pYQg5F9guDuEtXAT0v4AJO5m98GM-gj_LUojT00lvNkQ/exec';
+var APPS_SCRIPT_SECRET = 'vNDh5YAAAmsH8DAEIfIO_iSN-OjCJi1v';
+  
   var viewDate = new Date();
   viewDate.setDate(1);
   var selectedDate = null; // día elegido en el calendario (paso 1)
