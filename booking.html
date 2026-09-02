@@ -20,39 +20,63 @@
       </ul>
     </div>
 
-    <div class="booking-select-label">Selecciona un horario para la cita</div>
     <div class="booking-tz">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>
       (GMT-05:00) Hora estándar de Perú
     </div>
 
     <div class="booking-body">
-      <div class="booking-calendar">
-        <div class="booking-cal-head">
-          <span class="booking-month-label" id="bookingMonthLabel">—</span>
-          <div class="booking-nav">
-            <button type="button" id="bookingPrev" aria-label="Mes anterior">&#8249;</button>
-            <button type="button" id="bookingNext" aria-label="Mes siguiente">&#8250;</button>
+      <div class="booking-step booking-step-day" id="bookingStepDay">
+        <div class="booking-select-label">1. Selecciona un día</div>
+        <div class="booking-calendar">
+          <div class="booking-cal-head">
+            <span class="booking-month-label" id="bookingMonthLabel">—</span>
+            <div class="booking-nav">
+              <button type="button" id="bookingPrev" aria-label="Mes anterior">&#8249;</button>
+              <button type="button" id="bookingNext" aria-label="Mes siguiente">&#8250;</button>
+            </div>
           </div>
+          <div class="booking-weekdays">
+            <span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span>
+          </div>
+          <div class="booking-days" id="bookingDays"></div>
         </div>
-        <div class="booking-weekdays">
-          <span>DOM</span><span>LUN</span><span>MAR</span><span>MIÉ</span><span>JUE</span><span>VIE</span><span>SÁB</span>
-        </div>
-        <div class="booking-days" id="bookingDays"></div>
       </div>
 
-      <div class="booking-daypanel">
-        <div class="booking-daynav">
-          <button type="button" id="bookingDayPrev" class="booking-day-arrow" aria-label="Día anterior">&#8249;</button>
-          <div class="booking-daycols" id="bookingDayCols"></div>
-          <button type="button" id="bookingDayNext" class="booking-day-arrow" aria-label="Día siguiente">&#8250;</button>
+      <div class="booking-step booking-step-time" id="bookingStepTime" hidden>
+        <button type="button" class="booking-back" id="bookingBack">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5M6 12h12"/></svg>
+          Cambiar día
+        </button>
+        <div class="booking-select-label">2. Selecciona un horario</div>
+        <div class="booking-daytabs" id="bookingDayTabs"></div>
+        <div class="booking-slots" id="bookingSlots"></div>
+      </div>
+
+      <div class="booking-step booking-step-details" id="bookingStepDetails" hidden>
+        <button type="button" class="booking-back" id="bookingBackDetails">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17-5-5 5-5M6 12h12"/></svg>
+          Cambiar horario
+        </button>
+        <div class="booking-select-label">3. Tus datos</div>
+        <div class="booking-summary" id="bookingSummary"></div>
+        <div class="booking-fields">
+          <div class="booking-field">
+            <label for="bkName">Nombre completo</label>
+            <input type="text" id="bkName" placeholder="Ej. María Fernández">
+          </div>
+          <div class="booking-field">
+            <label for="bkEmail">Correo (para la invitación de Meet)</label>
+            <input type="email" id="bkEmail" placeholder="nombre@tuempresa.com">
+          </div>
         </div>
+        <p class="booking-error" id="bookingError" hidden></p>
       </div>
     </div>
 
-    <div class="booking-footer">
-      <button type="button" class="btn btn-primary booking-confirm" id="bookingConfirm" disabled>Confirmar</button>
-      <p class="booking-note">Al confirmar te llevamos a WhatsApp para coordinar los datos con nuestro equipo.</p>
+    <div class="booking-footer" id="bookingFooter" hidden>
+      <button type="button" class="btn btn-primary booking-confirm" id="bookingConfirm" disabled>Continuar</button>
+      <p class="booking-note" id="bookingNote">Elige un horario para continuar.</p>
     </div>
 
   </div>

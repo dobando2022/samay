@@ -5,9 +5,17 @@
   var SLOTS       = ['09:00 am','10:00 am','11:00 am','01:00 pm','02:30 pm','04:00 pm'];
   var WHATSAPP_NUMBER = '51972498952';
 
+  // ---------- Google Meet / Calendar (Google Apps Script) ----------
+  // TODO: reemplaza estos dos valores después de desplegar el Apps Script
+  // (ver samay_booking_apps_script.gs) — sin esto el botón no puede crear
+  // la reunión real, solo mostrará el mensaje de respaldo por WhatsApp.
+  var APPS_SCRIPT_URL = 'REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT';
+  var APPS_SCRIPT_SECRET = 'REEMPLAZA_CON_TU_CLAVE_SECRETA';
+
   var viewDate = new Date();
   viewDate.setDate(1);
-  var selectedDate = null;
+  var selectedDate = null; // día elegido en el calendario (paso 1)
+  var activeDate = null;   // día activo entre las 3 pestañas del paso 2
   var selectedSlot = null;
 
   /* ---------- includes ---------- */
@@ -21,6 +29,32 @@
       })
       .then(function(html){ el.innerHTML = html; })
       .catch(function(err){ console.error(err); });
+  }
+
+  /* ---------- dropdown "Servicios" ---------- */
+  function initNavDropdown(){
+    var dd = document.querySelector('.nav-dropdown');
+    if(!dd) return;
+    var trigger = dd.querySelector('.nav-dropdown-trigger');
+    if(!trigger) return;
+
+    trigger.addEventListener('click', function(e){
+      e.stopPropagation();
+      var open = dd.classList.toggle('is-open');
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if(!dd.contains(e.target)){
+        dd.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){
+        dd.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
   }
 
   /* ---------- header scroll ---------- */
@@ -134,106 +168,114 @@
     });
   }
 
-  /* ---------- day columns (panel de horarios) ---------- */
+  /* ---------- paso 1 → paso 2 ---------- */
   function isEnabledDay(date){
     return !isPast(date) && !isWeekend(date);
-  }
-
-  function firstEnabledDay(fromDate){
-    var d = new Date(fromDate);
-    d.setHours(0,0,0,0);
-    var guard = 0;
-    while(!isEnabledDay(d) && guard < 30){
-      d.setDate(d.getDate() + 1);
-      guard++;
-    }
-    return d;
-  }
-
-  function nextEnabledDay(fromDate, direction){
-    var d = new Date(fromDate);
-    var guard = 0;
-    do{
-      d.setDate(d.getDate() + direction);
-      guard++;
-    } while(!isEnabledDay(d) && guard < 30);
-    return d;
-  }
-
-  function getEnabledDaysFrom(startDate, count){
-    var days = [];
-    var d = new Date(startDate);
-    var guard = 0;
-    while(days.length < count && guard < 60){
-      if(isEnabledDay(d)) days.push(new Date(d));
-      d.setDate(d.getDate() + 1);
-      guard++;
-    }
-    return days;
   }
 
   function selectDate(date){
     selectedDate = new Date(date);
     selectedDate.setHours(0,0,0,0);
+    activeDate = new Date(selectedDate);
     selectedSlot = null;
     renderCalendar();
-    renderDayColumns();
+    goToTimeStep();
   }
 
-  function renderDayColumns(){
-    var wrap = document.getElementById('bookingDayCols');
+  function goToTimeStep(){
+    document.getElementById('bookingStepDetails').hidden = true;
+    document.getElementById('bookingStepDay').hidden = true;
+    document.getElementById('bookingStepTime').hidden = false;
+    document.getElementById('bookingFooter').hidden = false;
+    var btn = document.getElementById('bookingConfirm');
+    btn.textContent = 'Continuar';
+    document.getElementById('bookingNote').textContent = 'Elige un horario para continuar.';
+    renderDayTabs();
+    renderSlots();
+  }
+
+  function goToDayStep(){
+    document.getElementById('bookingStepDetails').hidden = true;
+    document.getElementById('bookingStepTime').hidden = true;
+    document.getElementById('bookingStepDay').hidden = false;
+    document.getElementById('bookingFooter').hidden = true;
+    renderCalendar();
+  }
+
+  /* ---------- paso 2 → paso 3 (datos de contacto) ---------- */
+  function goToDetailsStep(){
+    document.getElementById('bookingStepTime').hidden = true;
+    document.getElementById('bookingStepDetails').hidden = false;
+    renderSummary();
+    document.getElementById('bookingError').hidden = true;
+    var btn = document.getElementById('bookingConfirm');
+    btn.textContent = 'Confirmar y enviar invitación';
+    btn.disabled = false;
+    document.getElementById('bookingNote').textContent = 'Te enviaremos la invitación con el enlace de Google Meet a tu correo.';
+  }
+
+  function renderSummary(){
+    var el = document.getElementById('bookingSummary');
+    if(!el || !activeDate || !selectedSlot) return;
+    var fecha = DAY_NAMES[activeDate.getDay()] + ' ' + activeDate.getDate() + ' de ' + MONTH_NAMES[activeDate.getMonth()];
+    el.textContent = fecha + ' · ' + selectedSlot + ' (hora de Perú)';
+  }
+
+  /* ---------- paso 2: 3 pestañas de día (anterior, elegido, siguiente) ---------- */
+  function renderDayTabs(){
+    var wrap = document.getElementById('bookingDayTabs');
+    if(!wrap || !selectedDate) return;
+    wrap.innerHTML = '';
+
+    [-1, 0, 1].forEach(function(offset){
+      var d = new Date(selectedDate);
+      d.setDate(d.getDate() + offset);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'daytab';
+      btn.innerHTML =
+        '<span class="daytab-weekday">' + DAY_NAMES[d.getDay()].slice(0,3).toUpperCase() + '</span>' +
+        '<span class="daytab-num">' + d.getDate() + '</span>';
+
+      if(!isEnabledDay(d)){
+        btn.disabled = true;
+      } else {
+        if(isSameDay(d, activeDate)) btn.classList.add('is-active');
+        btn.addEventListener('click', (function(dateForTab){
+          return function(){
+            activeDate = dateForTab;
+            selectedSlot = null;
+            renderDayTabs();
+            renderSlots();
+          };
+        })(d));
+      }
+      wrap.appendChild(btn);
+    });
+  }
+
+  /* ---------- paso 2: horarios del día activo ---------- */
+  function renderSlots(){
+    var wrap = document.getElementById('bookingSlots');
     var confirmBtn = document.getElementById('bookingConfirm');
     if(!wrap || !confirmBtn) return;
-
-    var anchor = selectedDate ? new Date(selectedDate) : firstEnabledDay(new Date());
-    var days = getEnabledDaysFrom(anchor, 5);
-
     wrap.innerHTML = '';
-    days.forEach(function(day, index){
-      var col = document.createElement('div');
-      col.className = 'daycol';
-      if(index === 0) col.classList.add('is-active');
 
-      var head = document.createElement('div');
-      head.className = 'daycol-head';
-      head.innerHTML =
-        '<span class="daycol-weekday">' + DAY_NAMES[day.getDay()].slice(0,3).toUpperCase() + '</span>' +
-        '<span class="daycol-num">' + day.getDate() + '</span>';
-      col.appendChild(head);
-
-      var slotsBox = document.createElement('div');
-      slotsBox.className = 'daycol-slots';
-      SLOTS.forEach(function(slot){
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'booking-slot';
-        b.textContent = slot;
-        if(isSameDay(day, selectedDate) && slot === selectedSlot){
-          b.classList.add('is-selected');
-        }
-        b.addEventListener('click', (function(dayForSlot, slotValue){
-          return function(){
-            selectedDate = new Date(dayForSlot);
-            selectedSlot = slotValue;
-            renderCalendar();
-            renderDayColumns();
-          };
-        })(day, slot));
-        slotsBox.appendChild(b);
+    SLOTS.forEach(function(slot){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'booking-slot';
+      b.textContent = slot;
+      if(slot === selectedSlot) b.classList.add('is-selected');
+      b.addEventListener('click', function(){
+        selectedSlot = slot;
+        renderSlots();
       });
-      col.appendChild(slotsBox);
-      wrap.appendChild(col);
+      wrap.appendChild(b);
     });
 
-    confirmBtn.disabled = !(selectedDate && selectedSlot);
-  }
-
-  function stepActiveDay(direction){
-    var anchor = selectedDate ? selectedDate : firstEnabledDay(new Date());
-    selectedDate = nextEnabledDay(anchor, direction);
-    selectedSlot = null;
-    renderCalendar();
-    renderDayColumns();
+    confirmBtn.disabled = !selectedSlot;
   }
 
   function openBookingModal(){
@@ -242,10 +284,14 @@
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    if(!selectedDate){ selectedDate = firstEnabledDay(new Date()); }
-    viewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-    renderCalendar();
-    renderDayColumns();
+
+    selectedDate = null;
+    activeDate = null;
+    selectedSlot = null;
+    viewDate = new Date();
+    viewDate.setDate(1);
+
+    goToDayStep();
   }
 
   function closeBookingModal(){
@@ -256,20 +302,90 @@
     document.body.style.overflow = '';
   }
 
-  function confirmBooking(){
-    if(!selectedDate || !selectedSlot) return;
-    var fecha = DAY_NAMES[selectedDate.getDay()] + ' ' + selectedDate.getDate() + ' de ' + MONTH_NAMES[selectedDate.getMonth()];
-    var msg = 'Hola, quiero agendar una llamada el ' + fecha + ' a las ' + selectedSlot + '. Mi nombre es ___';
-    var url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
-    window.open(url, '_blank', 'noopener');
-    closeBookingModal();
+  /* ---------- paso 3: crear la reunión (Google Meet) y notificar por correo ---------- */
+  function submitBooking(){
+    var nameEl = document.getElementById('bkName');
+    var emailEl = document.getElementById('bkEmail');
+    var errorEl = document.getElementById('bookingError');
+    var btn = document.getElementById('bookingConfirm');
+
+    var name = nameEl.value.trim();
+    var email = emailEl.value.trim();
+
+    if(!name || !email || email.indexOf('@') === -1){
+      errorEl.textContent = 'Completa tu nombre y un correo válido para continuar.';
+      errorEl.hidden = false;
+      return;
+    }
+
+    errorEl.hidden = true;
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    btn.textContent = 'Agendando...';
+
+    var payload = {
+      secret: APPS_SCRIPT_SECRET,
+      name: name,
+      email: email,
+      date: activeDate.getFullYear() + '-' + String(activeDate.getMonth() + 1).padStart(2, '0') + '-' + String(activeDate.getDate()).padStart(2, '0'),
+      time: selectedSlot
+    };
+
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      // text/plain evita el preflight CORS que Apps Script no maneja bien
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(data && data.ok){
+          showBookingSuccess();
+        } else {
+          showBookingError();
+        }
+      })
+      .catch(function(){
+        showBookingError();
+      });
+  }
+
+  function showBookingSuccess(){
+    var body = document.querySelector('.booking-body');
+    var footer = document.getElementById('bookingFooter');
+    if(!body) return;
+    body.innerHTML =
+      '<div class="booking-success">' +
+        '<div class="booking-success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>' +
+        '<h3>¡Listo!</h3>' +
+        '<p>Te enviamos la invitación con el enlace de Google Meet a tu correo. Revisa también la carpeta de spam por si acaso.</p>' +
+      '</div>';
+    if(footer) footer.hidden = true;
+  }
+
+  function showBookingError(){
+    var errorEl = document.getElementById('bookingError');
+    var btn = document.getElementById('bookingConfirm');
+    if(!errorEl || !btn) return;
+
+    var fecha = activeDate ? (DAY_NAMES[activeDate.getDay()] + ' ' + activeDate.getDate() + ' de ' + MONTH_NAMES[activeDate.getMonth()]) : '';
+    var name = document.getElementById('bkName').value.trim();
+    var msg = 'Hola, quiero agendar una llamada el ' + fecha + ' a las ' + selectedSlot + '. Mi nombre es ' + (name || '___');
+    var waUrl = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+
+    errorEl.innerHTML = 'No pudimos agendar automáticamente. <a href="' + waUrl + '" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y coordinamos al toque.';
+    errorEl.hidden = false;
+
+    btn.disabled = false;
+    btn.classList.remove('is-loading');
+    btn.textContent = 'Confirmar y enviar invitación';
   }
 
   function initBooking(){
     var prevBtn = document.getElementById('bookingPrev');
     var nextBtn = document.getElementById('bookingNext');
-    var dayPrevBtn = document.getElementById('bookingDayPrev');
-    var dayNextBtn = document.getElementById('bookingDayNext');
+    var backBtn = document.getElementById('bookingBack');
+    var backDetailsBtn = document.getElementById('bookingBackDetails');
     var confirmBtn = document.getElementById('bookingConfirm');
     var closeBtn = document.getElementById('bookingClose');
     var overlay = document.getElementById('bookingOverlay');
@@ -283,9 +399,16 @@
       viewDate.setMonth(viewDate.getMonth() + 1);
       renderCalendar();
     });
-    dayPrevBtn.addEventListener('click', function(){ stepActiveDay(-1); });
-    dayNextBtn.addEventListener('click', function(){ stepActiveDay(1); });
-    confirmBtn.addEventListener('click', confirmBooking);
+    backBtn.addEventListener('click', goToDayStep);
+    backDetailsBtn.addEventListener('click', goToTimeStep);
+    confirmBtn.addEventListener('click', function(){
+      var detailsVisible = !document.getElementById('bookingStepDetails').hidden;
+      if(detailsVisible){
+        submitBooking();
+      } else if(selectedSlot){
+        goToDetailsStep();
+      }
+    });
     closeBtn.addEventListener('click', closeBookingModal);
     overlay.addEventListener('click', function(e){
       if(e.target === overlay) closeBookingModal();
@@ -307,7 +430,10 @@
   document.addEventListener('DOMContentLoaded', function(){
     initReveal();
     initFaq();
-    loadInclude('#header-placeholder', 'header.html').then(initHeaderScroll);
+    loadInclude('#header-placeholder', 'header.html').then(function(){
+      initHeaderScroll();
+      initNavDropdown();
+    });
     loadInclude('#footer-placeholder', 'footer.html');
     loadInclude('#booking-placeholder', 'booking.html').then(initBooking);
   });
